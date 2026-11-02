@@ -1,65 +1,98 @@
-"""
-Problema de los Misioneros y Caníbales.
-
-Este programa modela el problema clásico de transportar a tres
-misioneros y tres caníbales de una orilla a otra mediante un bote
-con capacidad máxima de dos personas.
-
-Representación del estado:
-    (misioneros_izq, canibales_izq, bote_izq)
-
-Donde:
-    - misioneros_izq: cantidad de misioneros en la orilla izquierda.
-    - canibales_izq: cantidad de caníbales en la orilla izquierda.
-    - bote_izq: 1 si el bote está a la izquierda y 0 si está a la derecha.
-
-Posteriormente se implementarán los algoritmos de búsqueda BFS y DFS.
-"""
-
-# Cantidad total de misioneros y caníbales.
-N = 3
-
-# Capacidad máxima del bote.
-CAPACIDAD = 2
-
-# Estado inicial: todos están en la orilla izquierda.
-S0 = (N, N, 1)
-
-# Estado objetivo: todos están en la orilla derecha.
-META = (0, 0, 0)
+# Generar todas las acciones posibles según la capacidad del bote.
+TODAS_LAS_ACCIONES = [
+    (m, c)
+    for m in range(CAPACIDAD + 1)
+    for c in range(CAPACIDAD + 1)
+    if 1 <= m + c <= CAPACIDAD
+]
 
 
-def es_seguro(s):
+def result(s, a):
     """
-    Verifica si un estado cumple las restricciones del problema.
-
-    Un estado es seguro cuando:
-        - Las cantidades de personas están dentro de los límites.
-        - El bote se encuentra en una de las dos orillas.
-        - Los caníbales nunca superan en número a los misioneros
-          en una orilla donde haya misioneros.
+    Calcula el nuevo estado después de ejecutar una acción.
 
     Parámetros:
-        s (tuple): Estado representado por (m, c, b).
+        s (tuple): Estado actual (m, c, b).
+        a (tuple): Acción representada por (mover_m, mover_c).
 
     Retorna:
-        bool: True si el estado es válido y seguro; False en caso contrario.
+        tuple: Nuevo estado después del movimiento.
     """
     m, c, b = s
+    mover_m, mover_c = a
 
-    # Validar cantidades y posición del bote.
-    if not (0 <= m <= N and 0 <= c <= N):
-        return False
+    if b == 1:
+        # El bote se desplaza de izquierda a derecha.
+        nuevo_estado = (m - mover_m, c - mover_c, 0)
+    else:
+        # El bote se desplaza de derecha a izquierda.
+        nuevo_estado = (m + mover_m, c + mover_c, 1)
 
-    if b not in (0, 1):
-        return False
+    return nuevo_estado
 
-    # Calcular las personas que están en la orilla derecha.
-    m_der = N - m
-    c_der = N - c
 
-    # Comprobar la seguridad de ambas orillas.
-    seguro_izq = (m == 0) or (m >= c)
-    seguro_der = (m_der == 0) or (m_der >= c_der)
+def actions(s):
+    """
+    Obtiene las acciones legales disponibles desde un estado.
 
-    return seguro_izq and seguro_der
+    Comprueba que existan suficientes personas en la orilla
+    de salida y que el nuevo estado sea seguro.
+
+    Parámetros:
+        s (tuple): Estado actual (m, c, b).
+
+    Retorna:
+        list: Lista de acciones legales disponibles.
+    """
+    m, c, b = s
+    acciones_validas = []
+
+    for a in TODAS_LAS_ACCIONES:
+        mover_m, mover_c = a
+
+        # Verificar que existan suficientes personas para el traslado.
+        if b == 1:
+            if mover_m > m or mover_c > c:
+                continue
+        else:
+            if mover_m > (N - m) or mover_c > (N - c):
+                continue
+
+        # Calcular el estado que produciría la acción.
+        siguiente = result(s, a)
+
+        # Aceptar únicamente los estados seguros.
+        if es_seguro(siguiente):
+            acciones_validas.append(a)
+
+    return acciones_validas
+
+
+def is_goal(s):
+    """
+    Comprueba si se alcanzó el estado objetivo.
+
+    Parámetros:
+        s (tuple): Estado que se desea comprobar.
+
+    Retorna:
+        bool: True si se alcanzó la meta; False en caso contrario.
+    """
+    return s == META
+
+
+def cost(s, a, s2):
+    """
+    Calcula el costo de realizar una transición.
+
+    Cada viaje del bote tiene un costo uniforme de 1.
+
+    Parámetros:
+        s (tuple): Estado de origen.
+        a (tuple): Acción realizada.
+        s2 (tuple): Estado resultante.
+
+    Retorna:
+        int: Costo de la transición.
+    """
+    return 1
