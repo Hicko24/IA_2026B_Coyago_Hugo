@@ -198,3 +198,37 @@ def bfs():
         frontera_max = max(frontera_max, len(frontera))
 
     return None, None, None, expandidos, frontera_max
+
+
+def dfs():
+    """
+    Búsqueda en profundidad (DFS): la frontera es una pila LIFO.
+
+    Retorna:
+        tuple: (acciones, estados, costo, nodos expandidos, frontera máxima).
+    """
+    frontera = [S0]
+    padres = {S0: None}               # estado -> (padre, acción)
+    explorados = set()
+    expandidos = 0
+    frontera_max = 1
+
+    while frontera:
+        s = frontera.pop()            # LIFO: el más reciente primero
+        if s in explorados:
+            continue
+        explorados.add(s)
+
+        if is_goal(s):
+            acciones, estados, costo = _reconstruir(padres, s)
+            return acciones, estados, costo, expandidos, frontera_max
+
+        expandidos += 1
+        for a in actions(s):
+            s2 = result(s, a)
+            if s2 not in explorados and s2 not in padres:
+                padres[s2] = (s, a)
+                frontera.append(s2)
+        frontera_max = max(frontera_max, len(frontera))
+
+    return None, None, None, expandidos, frontera_max
