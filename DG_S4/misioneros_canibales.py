@@ -4,11 +4,14 @@ Misioneros y Caníbales: búsqueda ciega (BFS y DFS).
 Notación: s_0, Actions(s), Result(s, a), IsGoal(s), c(s, a, s').
 Estado: s = (m_izq, c_izq, b_izq); b_izq = 1 si el bote está en la izquierda.
 
+Uso:  python3 misioneros_canibales.py
+
 Convenciones de medición:
   - Un nodo se cuenta como 'expandido' cuando se extrae de la frontera y se
     generan sus sucesores. El test de meta se aplica al extraer el nodo.
   - 'frontera_max' es el mayor tamaño que alcanzó la frontera.
 """
+import time
 from collections import deque
 
 N = 3            # misioneros (y caníbales) totales
@@ -232,3 +235,56 @@ def dfs():
         frontera_max = max(frontera_max, len(frontera))
 
     return None, None, None, expandidos, frontera_max
+
+
+def describir(a, estado_antes):
+    """
+    Describe una acción en texto legible.
+
+    Parámetros:
+        a (tuple): Acción (misioneros, caníbales) que viajan en el bote.
+        estado_antes (tuple): Estado desde el que se ejecuta la acción.
+
+    Retorna:
+        str: Descripción, por ejemplo "1M + 1C (izq -> der)".
+    """
+    m, c = a
+    sentido = "izq -> der" if estado_antes[2] == 1 else "der -> izq"
+    return f"{m}M + {c}C ({sentido})"
+
+
+def medir(algoritmo, repeticiones=2000):
+    """
+    Mide el tiempo promedio de ejecución de un algoritmo de búsqueda.
+
+    Cada búsqueda dura microsegundos, por lo que se promedian varias
+    repeticiones para obtener una medición confiable.
+
+    Parámetros:
+        algoritmo (callable): Función bfs o dfs.
+        repeticiones (int): Número de ejecuciones a promediar.
+
+    Retorna:
+        tuple: (resultado de la búsqueda, tiempo promedio en segundos).
+    """
+    t0 = time.perf_counter()
+    for _ in range(repeticiones):
+        resultado = algoritmo()
+    return resultado, (time.perf_counter() - t0) / repeticiones
+
+
+if __name__ == "__main__":
+    filas = []
+    for nombre, algoritmo in (("BFS", bfs), ("DFS", dfs)):
+        (acciones, estados, costo, expandidos, frontera_max), t = medir(algoritmo)
+
+        print(f"\n=== {nombre} ===")
+        for i, a in enumerate(acciones):
+            print(f"{i + 1:2d}. {describir(a, estados[i])}  ->  {estados[i + 1]}")
+
+        filas.append((nombre, expandidos, t, len(acciones), costo, frontera_max))
+
+    print("\n| Algoritmo | Nodos expandidos | Tiempo (s) | Longitud | Costo | Frontera máx. |")
+    print("|-----------|------------------|------------|----------|-------|---------------|")
+    for n, e, t, l, c, f in filas:
+        print(f"| {n} | {e} | {t:.8f} | {l} | {c} | {f} |")
